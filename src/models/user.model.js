@@ -52,8 +52,8 @@ const userSchema = new mongoose.Schema(
 
 userSchema.pre("save", async function(next){
     if(!this.isModified("password")) return next();
-    // the above if statement is used to only run the excription function when the password is either entered first time or when password is changed
-    this.password = bcrypt.hash(this.password, 10)
+    // the above if statement is used to only run the encription function when the password is either entered first time or when password is changed
+    this.password = await bcrypt.hash(this.password, 10)
     next()
 })
 
