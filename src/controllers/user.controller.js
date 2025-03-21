@@ -17,7 +17,7 @@ const registerUser = asyncHandler(async (req,res)=>{
     // return res
 
     const {username, email, password, fullName} = req.body
-    console.log("email", email)
+    
     // from and json data body se milta h url wala body se nahi milta hai
 
     if(
@@ -26,7 +26,7 @@ const registerUser = asyncHandler(async (req,res)=>{
         throw new apiError(400, "all fields are required")
     }
 
-    const exitedUser = User.findOne({
+    const exitedUser = await User.findOne({
         $or: [{username},{email}]
     })
 
@@ -34,8 +34,13 @@ const registerUser = asyncHandler(async (req,res)=>{
         throw new apiError(409,"User already exit!")
     }
 
-    const avatarLocalPath = req.files?.avator[0]?.path;
-    const coverIamgeLocalpath = re.files?.coverImage[0]?.path;
+    const avatarLocalPath = req.files?.avatar[0]?.path;
+    // const coverIamgeLocalpath = req.files?.coverImage[0]?.path;
+
+    let coverIamgeLocalpath;
+    if(req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0){
+        coverIamgeLocalpath = req.files.coverImage[0].path
+    }
 
     if(!avatarLocalPath){
         throw new apiError(400, "avatar file is required")
@@ -51,7 +56,7 @@ const registerUser = asyncHandler(async (req,res)=>{
     const user = await User.create({
         fullName,
         avatar: avatar.url,
-        coverIamge: coverIamge?.url || "",
+        coverImage: coverIamge?.url || "",
         email,
         password,
         username: username.toLowerCase(),
