@@ -4,9 +4,9 @@ import {User} from '../models/user.model.js'
 import { uploadOnCloudinary } from '../utils/cloudnary_file_uploader.js'
 import { apiResponse } from '../utils/apiResponse.js'
 
-const generateRefreshAndAccessTockens = async(userId)=>{
+const generateRefreshAndAccessTokens = async(userId)=>{
     try { 
-        const user = await User.findOne(userId)
+        const user = await User.findById(userId)
         const accessToken = user.generateAccessToken()
         const refreshToken = user.generateRefreshToken()
 
@@ -16,7 +16,7 @@ const generateRefreshAndAccessTockens = async(userId)=>{
         return {accessToken, refreshToken}
 
     } catch (error) {
-        throw new apiError(500, "Something went wrong while generation access and refresh tocken")
+        throw new apiError(500, "Something went wrong while generating access and refresh tokens")
     }
 }
 
@@ -93,12 +93,12 @@ const loginUser = asyncHandler(async (req,res)=>{
 
     const {username, email, password} = req.body
 
-    if(!username || !email){
-        throw new apiError(400, "username or password is required!")
+    if(!username && !email){
+        throw new apiError(400, "username or email is required!")
     }
 
-    const user = User.findOne({
-        $or: [{username},{email} ]
+    const user = await User.findOne({
+        $or: [{username}, {email}]
     })
 
     if(!user){
@@ -111,10 +111,12 @@ const loginUser = asyncHandler(async (req,res)=>{
         throw new apiError(401, "PASSWORD INCORRECT!")
     }
 
-    const {accessToken, refreshToken} = await generateRefreshAndAccessTockens(user._id)
+    const {accessToken, refreshToken} = await generateRefreshAndAccessTokens(user._id)
 
-    const loggedInUser = User.findOne(user._id).
-    select("-password -refreshToken")
+    const loggedInUser = JSON.parse(JSON.stringify(
+        await User.findById(user._id)
+            .select("-password -refreshToken")
+    ));
 
     const options = {
         httpOnly: true,
